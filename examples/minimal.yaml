@@ -1,0 +1,16 @@
+# Minimal configuration: watch one directory and redact everything with a single policy.
+# No routes and no classifiers, so every file falls to the default policy.
+
+watch:
+  locations:
+    - path: "/data/intake"
+      output: "/data/redacted"
+      done:   "/data/intake/.done"
+      error:  "/data/intake/.error"
+
+engines:
+  philter1: { url: "http://localhost:8080" }
+
+default:
+  engine: philter1
+  policy: default

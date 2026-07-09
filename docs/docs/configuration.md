@@ -1,0 +1,129 @@
+# Configuration
+
+Philter Router reads a single YAML file, passed as the first argument:
+
+```
+java -jar philter-router.jar router.yaml
+```
+
+Configuration is validated on startup and is fail-closed: any problem (a missing `default`, an unknown
+engine or classifier, an invalid port) prevents the router from starting rather than letting it run with
+a gap. At least one entry point must be enabled: the HTTP API (`server`), folder watching
+(`watch.locations`), or both.
+
+## Blocks
+
+### `server`
+
+Enables the [HTTP API](http-api.md).
+
+```yaml
+server:
+  enabled: true
+  port: 8080
+```
+
+### `watch.locations`
+
+The directories to watch (see [Folder Watching](folder-watching.md)). Each location sets its own watch
+mechanism and drainage directories.
+
+```yaml
+watch:
+  locations:
+    - path: "/data/intake"
+      mode: poll            # poll (default; required on network shares) or notify (local only)
+      pollIntervalMs: 5000
+      stableForMs: 2000
+      recursive: true
+      output: "/data/redacted"
+      done:   "/data/intake/.done"
+      error:  "/data/intake/.error"
+```
+
+### `engines`
+
+Named Philter engines, referenced by routes and the default.
+
+```yaml
+engines:
+  philter1: { url: "http://philter1:8080" }
+  philter2: { url: "http://philter2:8080", context: "batch" }
+```
+
+`apiKey` and `context` are optional. Do not embed secrets in the policy; resolve an API key from the
+environment where possible.
+
+### `classifiers`
+
+Named local LLM classifiers. Each runs one prompt that returns a single label from `labels`, at most
+once per file (cached). The `{{text}}` placeholder is replaced with an excerpt of the extracted text.
+
+```yaml
+classifiers:
+  doc-type:
+    type: ollama
+    endpoint: "http://ollama:11434"
+    model: llama3.1
+    timeoutMs: 2000
+    labels: [medical, financial, legal, general]
+    prompt: |
+      Classify this document into exactly one of: medical, financial, legal, general.
+      Reply with only the label.
+      {{text}}
+```
+
+The endpoint must be local: a classifier reads un-redacted document text, which must not leave your
+boundary. On timeout, failure, or an unrecognized label, the router applies the default.
+
+### `routes`
+
+An ordered list, evaluated first match wins. Each route has a `match`, an optional `languages` list, and
+an outcome (`engine` + `policy`).
+
+```yaml
+routes:
+  - name: office-docs
+    match: { extensions: [".xlsx", ".docx"] }
+    languages: [eng, spa]
+    engine: philter2
+    policy: office-default
+
+  - name: medical-records
+    match: { classification: { classifier: doc-type, label: medical } }
+    languages: [any]
+    engine: philter1
+    policy: hipaa
+```
+
+Match fields: `contentTypes`, `extensions`, `directories`, and `classification`
+(`{ classifier: <name>, label: <label> }`). Within a route, all specified fields must match (AND);
+within a single field, a list is any-of (OR). For OR across fields, use two routes.
+
+`languages` is a list of allowed ISO 639-3 codes, AND-ed with the match. When omitted it defaults to
+`[eng]`. Use `any` to accept all languages. See [Routing](routing.md).
+
+### `default`
+
+The mandatory catch-all outcome, applied when no route matches or when language detection or a
+classifier cannot decide. The router refuses to start without it.
+
+```yaml
+default:
+  engine: philter1
+  policy: default
+```
+
+Point `default.policy` at a policy that redacts, so any unmatched file is still redacted.
+
+## Examples
+
+The [`examples/`](https://github.com/philterd/philter-router/tree/main/examples) directory has complete,
+commented configurations:
+
+- `minimal.yaml` - one watched directory, one policy.
+- `folder-watching.yaml` - multiple locations, two engines, a classifier, and routes.
+- `network-share.yaml` - `poll` on an SMB/NFS share, `notify` on a local disk.
+- `http-api.yaml` - the HTTP API with classification routing.
+- `watch-and-api.yaml` - the API and folder watching from one config.
+- `classifier-routing.yaml` - routing by classification and by language.

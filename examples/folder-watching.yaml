@@ -1,0 +1,61 @@
+# Folder-watching configuration.
+#
+# Files are matched top-to-bottom, first match wins. A file that matches no route (or whose language is
+# not allowed, or whose classifier is unavailable) falls to the mandatory default, which redacts.
+
+watch:
+  locations:
+    - path: "/mnt/intake/local"
+      mode: notify            # OS notifications (WatchService); local disks only
+      recursive: true
+      output: "/mnt/redacted/local"
+      done:   "/mnt/intake/local/.done"
+      error:  "/mnt/intake/local/.error"
+
+    - path: "/mnt/shares/legal"   # SMB/NFS share
+      mode: poll              # required for network shares (the default)
+      pollIntervalMs: 5000
+      stableForMs: 2000       # wait until size is quiescent before processing
+      recursive: true
+      output: "/mnt/redacted/legal"
+      done:   "/mnt/shares/legal/.done"
+      error:  "/mnt/shares/legal/.error"
+
+engines:
+  philter1: { url: "http://philter-java:8080" }    # Java engine (philterd/philter)
+  philter2: { url: "http://philter-dotnet:8080" }  # .NET engine (docx/xlsx/OCR)
+
+classifiers:                    # named map; local endpoints only
+  doc-type:
+    type: ollama
+    endpoint: "http://localhost:11434"
+    model: llama3.1
+    timeoutMs: 2000
+    labels: [medical, financial, legal, general]
+    prompt: |
+      Classify this document into exactly one of: medical, financial, legal, general.
+      Reply with only the label.
+      {{text}}
+
+routes:                         # ordered, first match wins
+  - name: office-docs
+    match: { extensions: [".xlsx", ".docx"] }   # cheap metadata match
+    languages: [eng, spa]                       # accept English or Spanish
+    engine: philter2
+    policy: office-default
+
+  - name: legal-intake
+    match: { directories: ["/mnt/shares/legal"] }
+    # languages omitted -> defaults to [eng]
+    engine: philter1
+    policy: legal-strict
+
+  - name: medical-records
+    match: { classification: { classifier: doc-type, label: medical } }
+    languages: [any]                            # any detected language
+    engine: philter1
+    policy: hipaa
+
+default:                        # mandatory; redacts anything unmatched
+  engine: philter1
+  policy: default

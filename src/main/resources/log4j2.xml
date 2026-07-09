@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Console-first logging for containers, with an optional rolling file appender for on-prem/Windows-service
+  deployment (enable by setting the "router.log.dir" system property). The audit trail is a separate
+  stream from operational logs and already carries structured JSON. No un-redacted content is ever logged.
+-->
+<Configuration status="WARN">
+
+    <Properties>
+        <!-- Rolling files go to router.log.dir when set, otherwise a writable temp directory so the
+             appenders never fail to initialize (for example as a non-root container user). -->
+        <Property name="logDir">${sys:router.log.dir:-${sys:java.io.tmpdir}/philter-router}</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{ISO8601} %-5level [%t] %logger{1.} - %msg%n"/>
+        </Console>
+        <!-- The audit logger already emits a JSON object per line, so pass it through verbatim. -->
+        <Console name="AuditConsole" target="SYSTEM_OUT">
+            <PatternLayout pattern="%m%n"/>
+        </Console>
+
+        <!-- Optional rolling files for on-prem/Windows-service; used when router.log.dir is set. -->
+        <RollingFile name="OperationalFile"
+                     fileName="${logDir}/philter-router.log"
+                     filePattern="${logDir}/philter-router-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="%d{ISO8601} %-5level [%t] %logger{1.} - %msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="50 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="14"/>
+        </RollingFile>
+        <RollingFile name="AuditFile"
+                     fileName="${logDir}/philter-router-audit.log"
+                     filePattern="${logDir}/philter-router-audit-%d{yyyy-MM-dd}-%i.log.gz">
+            <PatternLayout pattern="%m%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy/>
+                <SizeBasedTriggeringPolicy size="50 MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="90"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <!-- Audit trail: dedicated stream, not additive to the root logger. -->
+        <Logger name="audit" level="INFO" additivity="false">
+            <AppenderRef ref="AuditConsole"/>
+            <AppenderRef ref="AuditFile"/>
+        </Logger>
+
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="OperationalFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

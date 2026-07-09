@@ -1,0 +1,49 @@
+# HTTP API configuration (no folder watching).
+#
+# Endpoints:
+#   GET  /api/health
+#   POST /api/filter               (text in, redacted text out; ?p= overrides the policy)
+#   POST /api/documents            (raw file bytes in; returns a documentId)
+#   GET  /api/documents/{id}/status
+#   GET  /api/documents/{id}       (redacted bytes once completed)
+#   GET  /actuator/health, /actuator/prometheus
+#
+# The policy is auto-selected by the routes below unless ?p= is supplied. Filename can be given with
+# ?filename= or the X-Filename header; a source directory hint via the X-Source-Directory header.
+
+server:
+  enabled: true
+  port: 8080
+
+engines:
+  philter1: { url: "http://philter1:8080" }    # Java engine
+  philter2: { url: "http://philter2:8080" }    # .NET engine (docx/xlsx/OCR)
+
+classifiers:
+  doc-type:
+    type: ollama
+    endpoint: "http://ollama:11434"
+    model: llama3.1
+    timeoutMs: 2000
+    labels: [medical, financial, legal, general]
+    prompt: |
+      Classify this document into exactly one of: medical, financial, legal, general.
+      Reply with only the label.
+      {{text}}
+
+routes:
+  - name: office-docs
+    match: { extensions: [".xlsx", ".docx"] }
+    languages: [eng, spa]
+    engine: philter2
+    policy: office-default
+
+  - name: medical-records
+    match: { classification: { classifier: doc-type, label: medical } }
+    languages: [any]
+    engine: philter1
+    policy: hipaa
+
+default:
+  engine: philter1
+  policy: default

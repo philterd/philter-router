@@ -1,0 +1,64 @@
+openapi: 3.0.3
+info:
+  title: Philter Router API
+  version: 1.0.0
+  description: >
+    Routes files to a Philter redaction policy and engine based on file attributes, then forwards each
+    file to Philter for redaction. Mirrors Philter's contract; the policy is auto-selected by the router
+    unless the p query parameter overrides it, and the engine is always chosen by the router.
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: /
+
+paths:
+  /api/health:
+    get:
+      summary: Liveness.
+      responses:
+        '200':
+          description: The router is up.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: UP
+
+  /api/filter:
+    post:
+      summary: Redact text or a file.
+      description: >
+        Redact the request body and return the redacted content synchronously. Send a file by supplying
+        the filename query parameter (the body is the raw bytes); otherwise the body is treated as text.
+        Mirrors Philter's filter endpoint, so the Philter SDK works against it unchanged.
+      parameters:
+        - { name: p, in: query, required: false, schema: { type: string }, description: Override the selected policy. }
+        - { name: c, in: query, required: false, schema: { type: string }, description: Philter context. }
+        - { name: filename, in: query, required: false, schema: { type: string }, description: Filename; when present the body is treated as a file. }
+        - { name: X-Source-Directory, in: header, required: false, schema: { type: string }, description: Source-directory hint for directory routing. }
+        - { name: X-Classification, in: header, required: false, schema: { type: string }, description: "Pre-computed classifier labels as comma-separated classifier=label pairs; skips running that classifier." }
+        - { name: Authorization, in: header, required: false, schema: { type: string }, description: "Forwarded to Philter for this request; overrides the engine's configured API key." }
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema: { type: string }
+          application/octet-stream:
+            schema: { type: string, format: binary }
+      responses:
+        '200':
+          description: >
+            The redacted content. The applied policy is in the X-Philter-Policy header and the document
+            id in the x-document-id header.
+          content:
+            text/plain:
+              schema: { type: string }
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '502':
+          description: The redaction engine call failed.

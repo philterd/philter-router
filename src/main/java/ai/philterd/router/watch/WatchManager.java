@@ -1,0 +1,58 @@
+/*
+ * Copyright 2026 Philterd, LLC @ https://www.philterd.ai
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *          http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package ai.philterd.router.watch;
+
+import ai.philterd.router.config.RouterConfig;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+/** Starts one {@link FolderWatcher} per configured location over a shared, bounded worker pool. */
+public class WatchManager implements AutoCloseable {
+
+    private final ExecutorService workers;
+    private final List<FolderWatcher> watchers = new ArrayList<>();
+
+    public WatchManager(final RouterConfig config, final FileProcessor processor, final int workerThreads) {
+        this.workers = Executors.newFixedThreadPool(Math.max(1, workerThreads));
+        config.watch.locations.forEach(loc -> watchers.add(new FolderWatcher(loc, processor, workers)));
+    }
+
+    public void start() throws IOException {
+        for (final FolderWatcher watcher : watchers) {
+            watcher.start();
+        }
+    }
+
+    @Override
+    public void close() {
+        watchers.forEach(FolderWatcher::close);
+        workers.shutdown();
+        try {
+            if (!workers.awaitTermination(30, TimeUnit.SECONDS)) {
+                workers.shutdownNow();
+            }
+        } catch (final InterruptedException e) {
+            workers.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+}

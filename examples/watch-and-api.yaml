@@ -1,0 +1,21 @@
+# Enable both entry points from one config: the HTTP API and folder watching.
+# Files can arrive either by being dropped in the watched directory or by POSTing to the API.
+
+server:
+  enabled: true
+  port: 8080
+
+watch:
+  locations:
+    - path: "/data/intake"
+      mode: poll
+      output: "/data/redacted"
+      done:   "/data/intake/.done"
+      error:  "/data/intake/.error"
+
+engines:
+  philter1: { url: "http://philter1:8080" }
+
+default:
+  engine: philter1
+  policy: default

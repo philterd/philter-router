@@ -1,0 +1,50 @@
+# Runs Philter Router with a local Ollama for classification.
+#
+# The router starts whatever its config enables. Provide ./config/router.yaml with `server.enabled: true`
+# to expose the HTTP API (see examples/http-api.yaml). In it:
+#   - the classifier endpoint should be http://ollama:11434,
+#   - engine URLs should point at your Philter engines (the commented services below, or external hosts).
+#
+# Pull the classifier model once after start:  docker compose exec ollama ollama pull llama3.1
+#
+# The container serves the API over HTTPS with a self-signed certificate. For example:
+#   curl -k https://localhost:8080/api/health
+#   curl -k -X POST --data-binary 'His SSN is 123-45-6789.' https://localhost:8080/api/filter
+
+services:
+  philter-router:
+    build: .
+    image: philterd/philter-router:latest
+    restart: unless-stopped
+    depends_on:
+      - ollama
+    ports:
+      - "8080:8080"        # HTTP API (matches server.port in the config)
+    volumes:
+      - ./config:/config:ro
+      - ./data:/data
+    environment:
+      # Enable rolling file logs in addition to stdout.
+      JAVA_OPTS: "-Drouter.log.dir=/data/logs"
+
+  ollama:
+    image: ollama/ollama:latest
+    restart: unless-stopped
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+
+  # The Philter engines this router forwards to run as their own services. Add them here or point the
+  # engine URLs in router.yaml at existing deployments. Example shape:
+  #
+  # philter1:
+  #   image: philterd/philter:latest
+  #   restart: unless-stopped
+  #
+  # philter2:            # the .NET engine (docx/xlsx/OCR)
+  #   image: philterd/philter-dotnet:latest
+  #   restart: unless-stopped
+
+volumes:
+  ollama:

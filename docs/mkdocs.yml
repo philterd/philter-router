@@ -1,0 +1,20 @@
+site_name: Philter Router
+repo_url: https://github.com/philterd/philter-router
+site_url: https://philterd.github.io/philter-router/
+edit_uri: '?query=docs/docs/'
+copyright: Copyright 2026 Philterd, LLC
+site_author: philterd
+site_description: User guide for Philter Router, which routes files to a Philter redaction policy and engine based on file attributes.
+theme:
+  name: material
+  locale: en
+  palette:
+    primary: red
+nav:
+  - Home: index.md
+  - Configuration: configuration.md
+  - Routing: routing.md
+  - HTTP API: http-api.md
+  - Folder Watching: folder-watching.md
+  - Logging: logging.md
+  - Deployment: deployment.md

@@ -1,0 +1,29 @@
+# Watch a network share and a local disk with the appropriate mechanism for each.
+#
+# A network share (SMB/NFS) must use poll: OS notifications do not fire for changes made by another
+# host. A local disk can use notify for low latency.
+
+watch:
+  locations:
+    - path: "/mnt/shares/intake"     # SMB/NFS share
+      mode: poll
+      pollIntervalMs: 10000
+      stableForMs: 3000
+      recursive: true
+      output: "/mnt/shares/redacted"
+      done:   "/mnt/shares/intake/.done"
+      error:  "/mnt/shares/intake/.error"
+
+    - path: "/data/local-intake"     # local disk
+      mode: notify
+      recursive: true
+      output: "/data/local-redacted"
+      done:   "/data/local-intake/.done"
+      error:  "/data/local-intake/.error"
+
+engines:
+  philter1: { url: "http://philter1:8080" }
+
+default:
+  engine: philter1
+  policy: default
