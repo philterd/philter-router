@@ -79,6 +79,19 @@ The API is a Spring Boot application (matching Philter). Spring Boot Actuator ad
 endpoints alongside the Philter-compatible ones: `GET /actuator/health` (liveness/readiness) and
 `GET /actuator/prometheus` (metrics). An OpenAPI 3 spec is served at `GET /openapi.yaml`.
 
+## Batch redaction
+
+To redact an existing directory tree, drive the API from a client that walks the tree and POSTs each
+file; the router stays a stateless gateway. [`scripts/redact-tree.sh`](scripts/redact-tree.sh) is a
+reference client (only `curl` and `find` needed) that mirrors the input tree into an output directory
+and is resumable:
+
+```
+scripts/redact-tree.sh --in /data/src --out /data/redacted --url https://localhost:8080 --insecure
+```
+
+See [Batch Redaction](docs/docs/batch.md) for options and other clients.
+
 ## Configuration
 
 A single YAML file. See the [`examples/`](examples/) directory for complete, commented configurations

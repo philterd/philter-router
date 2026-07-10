@@ -15,6 +15,7 @@ nav:
   - Configuration: configuration.md
   - Routing: routing.md
   - HTTP API: http-api.md
+  - Batch Redaction: batch.md
   - Folder Watching: folder-watching.md
   - Logging: logging.md
   - Deployment: deployment.md
