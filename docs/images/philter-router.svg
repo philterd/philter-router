@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" font-family="-apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif" role="img" aria-label="Philter Router routes incoming files through a routing pipeline to a Philter engine and policy, with a mandatory default that always redacts.">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <!-- Incoming files -->
+  <g>
+    <rect x="20" y="150" width="150" height="140" rx="10" fill="#eef2ff" stroke="#c7d2fe" stroke-width="1.5"/>
+    <text x="95" y="180" text-anchor="middle" font-size="15" font-weight="600" fill="#1e293b">Incoming files</text>
+    <text x="95" y="206" text-anchor="middle" font-size="12" fill="#475569">watched folders</text>
+    <text x="95" y="224" text-anchor="middle" font-size="12" fill="#475569">or HTTP API</text>
+    <text x="95" y="256" text-anchor="middle" font-size="11.5" fill="#64748b">.txt  .pdf  .docx</text>
+    <text x="95" y="273" text-anchor="middle" font-size="11.5" fill="#64748b">.xlsx  images</text>
+  </g>
+
+  <!-- Router box -->
+  <rect x="235" y="40" width="380" height="360" rx="14" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+  <text x="425" y="72" text-anchor="middle" font-size="18" font-weight="700" fill="#0f172a">Philter Router</text>
+
+  <!-- Pipeline steps -->
+  <g font-size="13">
+    <rect x="265" y="92" width="320" height="46" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="285" y="114" font-size="13" font-weight="600" fill="#1e293b">1. Content type + text</text>
+    <text x="285" y="130" font-size="11.5" fill="#64748b">Apache Tika (from the bytes)</text>
+
+    <rect x="265" y="148" width="320" height="46" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="285" y="170" font-size="13" font-weight="600" fill="#1e293b">2. Language</text>
+    <text x="285" y="186" font-size="11.5" fill="#64748b">OpenNLP (ISO 639-3)</text>
+
+    <rect x="265" y="204" width="320" height="46" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="285" y="226" font-size="13" font-weight="600" fill="#1e293b">3. Classification</text>
+    <text x="285" y="242" font-size="11.5" fill="#64748b">local LLM (Ollama)</text>
+
+    <rect x="265" y="260" width="320" height="46" rx="8" fill="#ffffff" stroke="#cbd5e1"/>
+    <text x="285" y="282" font-size="13" font-weight="600" fill="#1e293b">4. Rules (first match wins)</text>
+    <text x="285" y="298" font-size="11.5" fill="#64748b">choose engine + policy</text>
+  </g>
+
+  <!-- Default fallback -->
+  <rect x="265" y="320" width="320" height="54" rx="8" fill="#fef2f2" stroke="#fecaca"/>
+  <text x="285" y="342" font-size="13" font-weight="600" fill="#991b1b">default policy</text>
+  <text x="285" y="360" font-size="11.5" fill="#b91c1c">no match, disallowed language, or classifier down: still redacts</text>
+
+  <!-- Philter engines -->
+  <g>
+    <rect x="700" y="120" width="175" height="90" rx="10" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5"/>
+    <text x="787" y="152" text-anchor="middle" font-size="15" font-weight="600" fill="#065f46">Philter engine</text>
+    <text x="787" y="176" text-anchor="middle" font-size="12" fill="#047857">redacts PII / PHI</text>
+    <text x="787" y="194" text-anchor="middle" font-size="11.5" fill="#059669">with the chosen policy</text>
+
+    <rect x="700" y="230" width="175" height="70" rx="10" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5"/>
+    <text x="787" y="262" text-anchor="middle" font-size="15" font-weight="600" fill="#065f46">Redacted output</text>
+    <text x="787" y="284" text-anchor="middle" font-size="11.5" fill="#059669">returned or written</text>
+  </g>
+
+  <!-- Arrows -->
+  <line x1="172" y1="220" x2="233" y2="220" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="617" y1="200" x2="698" y2="165" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="787" y1="212" x2="787" y2="228" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+</svg>

@@ -4,6 +4,8 @@ Philter Router routes files to a [Philter](https://github.com/philterd/philter) 
 engine based on file attributes, then forwards each file for redaction. It is the single front door in
 front of one or more Philter engines: hand it a file and it decides the policy and the engine.
 
+![How Philter Router routes files: incoming files pass through content-type detection, language detection, LLM classification, and ordered rules to select a Philter engine and policy, with a mandatory default that always redacts.](docs/images/philter-router.svg)
+
 A file's route is chosen from its attributes:
 
 - **content type** (detected from the bytes with Apache Tika, not just the extension),
@@ -47,7 +49,7 @@ java -Drouter.log.dir=/var/log/philter-router -jar target/philter-router.jar rou
 ```
 
 By default the router logs to stdout (operational logs and the structured audit trail both go to the
-console; see Logging).
+console).
 
 ## HTTP API
 
@@ -110,15 +112,6 @@ Routing is tiered so expensive work runs only when needed:
 
 A route that fails a cheaper tier never triggers a more expensive one. Extracted text is lossy,
 classification-only, and never written as output or logged.
-
-## Logging
-
-`log4j2`, with the audit trail on a separate logger from operational logs. The audit stream is
-structured JSON (one object per routed/failed file, keyed by content hash) and is written to a
-dedicated appender. Console output is the default; rolling files are enabled with `router.log.dir`.
-
-The router never logs un-redacted content: not extracted text, classifier prompts/responses, document
-bodies, or filenames/paths (the audit record identifies a file by its content hash).
 
 ## License
 
