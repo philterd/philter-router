@@ -26,6 +26,11 @@ import ai.philterd.router.config.ServerConfig;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.LogEvent;
+import org.apache.logging.log4j.core.Logger;
+import org.apache.logging.log4j.core.appender.AbstractAppender;
+import org.apache.logging.log4j.core.config.Property;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -45,6 +50,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Integration test: the running HTTP API against a stubbed Philter engine. */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -152,6 +158,56 @@ class ApiIT {
 
         final RecordedRequest request = philter.takeRequest();
         assertEquals("sk_callerkey", request.getHeader("Authorization"));
+    }
+
+    @Test
+    void exposesOutcomeCountersOnThePrometheusEndpoint() throws Exception {
+        philter.enqueue(new MockResponse().setBody("redacted"));
+        postFilter("", "some text", Map.of()); // routes to the default outcome
+        philter.takeRequest(); // drain so the shared queue stays balanced for other tests
+
+        final HttpResponse<String> metrics = HttpClient.newHttpClient().send(
+                HttpRequest.newBuilder(URI.create("http://localhost:" + port + "/actuator/prometheus")).GET().build(),
+                HttpResponse.BodyHandlers.ofString());
+
+        assertEquals(200, metrics.statusCode());
+        assertTrue(metrics.body().contains("philter_router_documents_total"),
+                "the Prometheus endpoint should expose the outcome counter");
+    }
+
+    @Test
+    void logsFilenameAndReasonWhenAnApiRequestFails() throws Exception {
+        final Logger logger = (Logger) LogManager.getLogger("ai.philterd.router.api.FilterController");
+        final CapturingAppender capture = new CapturingAppender();
+        capture.start();
+        logger.addAppender(capture);
+        try {
+            philter.enqueue(new MockResponse().setResponseCode(500)); // engine failure
+            final HttpResponse<String> response =
+                    postFilter("?filename=secret-report.txt", "His SSN is 123-45-6789.", Map.of());
+            philter.takeRequest(); // drain
+
+            assertEquals(502, response.statusCode());
+            assertTrue(capture.lines.stream().anyMatch(l -> l.contains("secret-report.txt")),
+                    "the operational log should name the failed file");
+        } finally {
+            logger.removeAppender(capture);
+            capture.stop();
+        }
+    }
+
+    /** In-memory log4j2 appender that collects formatted messages for assertions. */
+    private static final class CapturingAppender extends AbstractAppender {
+        private final java.util.List<String> lines = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+        private CapturingAppender() {
+            super("capture", null, null, true, Property.EMPTY_ARRAY);
+        }
+
+        @Override
+        public void append(final LogEvent event) {
+            lines.add(event.getMessage().getFormattedMessage());
+        }
     }
 
 }

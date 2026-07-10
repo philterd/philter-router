@@ -20,6 +20,7 @@ import ai.philterd.philter.model.FilterResponse;
 import ai.philterd.router.audit.AuditLogger;
 import ai.philterd.router.engine.EngineRegistry;
 import ai.philterd.router.engine.RequestAuthorization;
+import ai.philterd.router.metrics.RouterMetrics;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -48,11 +49,14 @@ public class FilterController {
     private final ApiRouting routing;
     private final EngineRegistry engines;
     private final AuditLogger audit;
+    private final RouterMetrics metrics;
 
-    public FilterController(final ApiRouting routing, final EngineRegistry engines, final AuditLogger audit) {
+    public FilterController(final ApiRouting routing, final EngineRegistry engines, final AuditLogger audit,
+                            final RouterMetrics metrics) {
         this.routing = routing;
         this.engines = engines;
         this.audit = audit;
+        this.metrics = metrics;
     }
 
     @PostMapping("/api/filter")
@@ -67,14 +71,25 @@ public class FilterController {
         final Map<String, String> classificationHints =
                 parseClassificationHints(request.getHeader("X-Classification"));
         final boolean isDocument = filename != null && !filename.isBlank();
+        // The filename for failure diagnostics on the operational log; the audit trail stays hash-only.
+        final String fileLabel = isDocument ? filename : "(text request)";
 
-        final ApiRouting.Result result =
-                routing.evaluate(body, filename, directoryHint, policyOverride, classificationHints);
+        final ApiRouting.Result result;
+        try {
+            result = routing.evaluate(body, filename, directoryHint, policyOverride, classificationHints);
+        } catch (final Exception e) {
+            LOGGER.error("Failed /api/filter request for '{}': {}", fileLabel, e.getMessage());
+            metrics.recordFailed();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("Failed to process the request.".getBytes(StandardCharsets.UTF_8));
+        }
 
         if (result.decision().rejected()) {
             // No route matched and the default rejects: refuse the document, do not forward to Philter.
             audit.rejected(result.hash(), result.decision(),
                     result.attributes().computedLanguage(), result.attributes().computedClassifications());
+            metrics.recordRejected(result.decision());
             ApiRouting.deleteQuietly(result.tempFile());
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                     .contentType(MediaType.TEXT_PLAIN)
@@ -103,6 +118,7 @@ public class FilterController {
 
             audit.routed(result.hash(), result.decision(),
                     result.attributes().computedLanguage(), result.attributes().computedClassifications());
+            metrics.recordRouted(result.decision());
 
             final ResponseEntity.BodyBuilder ok = ResponseEntity.ok()
                     .header("X-Philter-Policy", result.decision().policy())
@@ -112,9 +128,10 @@ public class FilterController {
             }
             return ok.body(content);
 
-        } catch (final IOException e) {
-            LOGGER.error("Engine call failed for a /api/filter request: {}", e.getMessage());
+        } catch (final Exception e) {
+            LOGGER.error("Redaction engine call failed for '{}': {}", fileLabel, e.getMessage());
             audit.failed(result.hash(), e.getMessage());
+            metrics.recordFailed();
             return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                     .contentType(MediaType.TEXT_PLAIN)
                     .body("Redaction engine call failed.".getBytes(StandardCharsets.UTF_8));

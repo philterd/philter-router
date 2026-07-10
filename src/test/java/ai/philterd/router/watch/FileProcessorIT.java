@@ -24,9 +24,11 @@ import ai.philterd.router.config.WatchLocation;
 import ai.philterd.router.engine.EngineRegistry;
 import ai.philterd.router.extract.TextExtractor;
 import ai.philterd.router.lang.LanguageDetector;
+import ai.philterd.router.metrics.RouterMetrics;
 import ai.philterd.router.model.AttributeSources;
 import ai.philterd.router.routing.DefaultAttributeSources;
 import ai.philterd.router.routing.Router;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.junit.jupiter.api.AfterEach;
@@ -75,7 +77,7 @@ class FileProcessorIT {
         final AttributeSources sources =
                 new DefaultAttributeSources(EXTRACTOR, LANGUAGE, new Classifier(), Map.of());
         processor = new FileProcessor(new Router(config), new EngineRegistry(config.engines), sources,
-                new ProcessedLedger(), new AuditLogger());
+                new ProcessedLedger(), new AuditLogger(), new RouterMetrics(new SimpleMeterRegistry()));
 
         final Path in = work.resolve("in");
         Files.createDirectories(in);
@@ -138,7 +140,8 @@ class FileProcessorIT {
         final AttributeSources sources =
                 new DefaultAttributeSources(EXTRACTOR, LANGUAGE, new Classifier(), Map.of());
         final FileProcessor rejectProcessor = new FileProcessor(new Router(rejectConfig),
-                new EngineRegistry(rejectConfig.engines), sources, new ProcessedLedger(), new AuditLogger());
+                new EngineRegistry(rejectConfig.engines), sources, new ProcessedLedger(), new AuditLogger(),
+                new RouterMetrics(new SimpleMeterRegistry()));
 
         final Path file = in("c.txt");
         Files.writeString(file, "unmatched content");

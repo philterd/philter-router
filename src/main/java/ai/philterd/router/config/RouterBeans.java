@@ -21,11 +21,15 @@ import ai.philterd.router.classify.Classifier;
 import ai.philterd.router.engine.EngineRegistry;
 import ai.philterd.router.extract.TextExtractor;
 import ai.philterd.router.lang.LanguageDetector;
+import ai.philterd.router.metrics.RouterMetrics;
 import ai.philterd.router.model.AttributeSources;
 import ai.philterd.router.routing.DefaultAttributeSources;
 import ai.philterd.router.routing.Router;
 import ai.philterd.router.watch.FileProcessor;
 import ai.philterd.router.watch.ProcessedLedger;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -81,10 +85,16 @@ public class RouterBeans {
     }
 
     @Bean
+    public RouterMetrics routerMetrics(final ObjectProvider<MeterRegistry> registry) {
+        // Fall back to a no-export registry so a watch-only (non-web) deployment still starts.
+        return new RouterMetrics(registry.getIfAvailable(SimpleMeterRegistry::new));
+    }
+
+    @Bean
     public FileProcessor fileProcessor(final Router router, final EngineRegistry engines,
                                        final AttributeSources sources, final ProcessedLedger ledger,
-                                       final AuditLogger audit) {
-        return new FileProcessor(router, engines, sources, ledger, audit);
+                                       final AuditLogger audit, final RouterMetrics metrics) {
+        return new FileProcessor(router, engines, sources, ledger, audit, metrics);
     }
 
     @Bean

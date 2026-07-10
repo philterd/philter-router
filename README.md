@@ -4,6 +4,8 @@ Philter Router routes files to a [Philter](https://github.com/philterd/philter) 
 engine based on file attributes, then forwards each file for redaction. It is the single front door in
 front of one or more Philter engines: hand it a file and it decides the policy and the engine.
 
+Read the announcement: [Introducing Philter Router: The Right Policy for Every File](https://philterd.ai/blog/introducing-philter-router-the-right-policy-for-every-file/).
+
 ![How Philter Router routes files: incoming files pass through content-type detection, language detection, LLM classification, and ordered rules to select a Philter engine and policy, with a mandatory default that always redacts.](docs/images/philter-router.svg)
 
 A file's route is chosen from its attributes:

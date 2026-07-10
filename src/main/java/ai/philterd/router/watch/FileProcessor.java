@@ -18,6 +18,7 @@ package ai.philterd.router.watch;
 import ai.philterd.router.audit.AuditLogger;
 import ai.philterd.router.config.WatchLocation;
 import ai.philterd.router.engine.EngineRegistry;
+import ai.philterd.router.metrics.RouterMetrics;
 import ai.philterd.router.model.AttributeSources;
 import ai.philterd.router.model.FileAttributes;
 import ai.philterd.router.model.RoutingDecision;
@@ -42,14 +43,16 @@ public class FileProcessor {
     private final AttributeSources sources;
     private final ProcessedLedger ledger;
     private final AuditLogger audit;
+    private final RouterMetrics metrics;
 
     public FileProcessor(final Router router, final EngineRegistry engines, final AttributeSources sources,
-                         final ProcessedLedger ledger, final AuditLogger audit) {
+                         final ProcessedLedger ledger, final AuditLogger audit, final RouterMetrics metrics) {
         this.router = router;
         this.engines = engines;
         this.sources = sources;
         this.ledger = ledger;
         this.audit = audit;
+        this.metrics = metrics;
     }
 
     public void process(final Path source, final WatchLocation location) {
@@ -77,6 +80,7 @@ public class FileProcessor {
                 // No route matched and the default rejects: quarantine to error, never emit output.
                 moveTo(source, location.error);
                 audit.rejected(hash, decision, attrs.computedLanguage(), attrs.computedClassifications());
+                metrics.recordRejected(decision);
                 return;
             }
 
@@ -88,6 +92,7 @@ public class FileProcessor {
 
             moveTo(source, location.done);
             audit.routed(hash, decision, attrs.computedLanguage(), attrs.computedClassifications());
+            metrics.recordRouted(decision);
 
         } catch (final Exception e) {
             LOGGER.error("Failed to process a file; moving it to the error location. Reason: {}", e.getMessage());
@@ -99,6 +104,7 @@ public class FileProcessor {
             if (hash != null) {
                 audit.failed(hash, e.getMessage());
             }
+            metrics.recordFailed();
         }
     }
 
