@@ -24,6 +24,7 @@ import okhttp3.Request;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 
 /** A named Philter engine the router forwards files to, wrapping the Philter Java SDK client. */
 public class PhilterEngine {
@@ -39,14 +40,21 @@ public class PhilterEngine {
 
         // Set Authorization from the caller's request when present, else the configured key. This lets
         // the router forward a caller's Authorization header to Philter per request.
-        final OkHttpClient.Builder http = new OkHttpClient.Builder().addInterceptor(chain -> {
-            final String authorization = resolveAuthorization(RequestAuthorization.get(), configuredApiKey);
-            Request request = chain.request();
-            if (authorization != null) {
-                request = request.newBuilder().header("Authorization", authorization).build();
-            }
-            return chain.proceed(request);
-        });
+        final OkHttpClient.Builder http = new OkHttpClient.Builder()
+                .connectTimeout(Duration.ofMillis(config.connectTimeoutMs))
+                .writeTimeout(Duration.ofMillis(config.writeTimeoutMs))
+                .readTimeout(Duration.ofMillis(config.readTimeoutMs))
+                .callTimeout(Duration.ofMillis(config.callTimeoutMs))
+                .addInterceptor(chain -> {
+                    final String authorization = resolveAuthorization(RequestAuthorization.get(), configuredApiKey);
+                    Request request = chain.request();
+                    if (authorization != null) {
+                        request = request.newBuilder().header("Authorization", authorization).build();
+                    }
+                    return chain.proceed(request);
+                });
+
+        TlsSupport.apply(http, config, name);
 
         this.client = new PhilterClient.PhilterClientBuilder()
                 .withEndpoint(config.url)

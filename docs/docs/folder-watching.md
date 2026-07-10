@@ -46,4 +46,6 @@ Files are tracked by content hash, so identical content is processed once even w
 re-observes it (duplicate events, the reconcile scan, or a restart within the process lifetime). The
 `output`, `done`, and `error` directories are excluded from scanning.
 
-The processed ledger is in-memory and per-process; a durable ledger that survives restarts is planned.
+The processed ledger is in-memory and per-process. Because it is not shared, run only one watcher per
+set of directories: two watchers on the same location would redact each file twice and contend on the
+move to `done`. See [Scaling](deployment.md#scaling) for how to run multiple instances.

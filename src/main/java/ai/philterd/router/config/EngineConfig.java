@@ -26,4 +26,22 @@ public class EngineConfig {
     /** Optional Philter context passed on filter calls. */
     public String context = "";
 
+    /** TCP connect timeout. */
+    public long connectTimeoutMs = 10_000;
+
+    /** Inactivity timeout while uploading the file body. */
+    public long writeTimeoutMs = 60_000;
+
+    /** Inactivity timeout while awaiting Philter's response. Size to the slowest routed document. */
+    public long readTimeoutMs = 120_000;
+
+    /** Hard end-to-end ceiling for the whole call. 0 disables it. */
+    public long callTimeoutMs = 0;
+
+    /** Path to a PEM certificate (or CA) to trust for a self-signed Philter, keeping verification on. */
+    public String caCertPath;
+
+    /** Disable TLS verification entirely. Trusted networks / testing only; prefer caCertPath. */
+    public boolean insecureSkipVerify = false;
+
 }

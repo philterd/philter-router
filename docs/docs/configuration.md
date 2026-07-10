@@ -48,11 +48,43 @@ Named Philter engines, referenced by routes and the default.
 ```yaml
 engines:
   philter1: { url: "http://philter1:8080" }
-  philter2: { url: "http://philter2:8080", context: "batch" }
+  philter2: { url: "http://philter2:8080", context: "batch", readTimeoutMs: 300000 }
 ```
 
 `apiKey` and `context` are optional. Do not embed secrets in the policy; resolve an API key from the
 environment where possible.
+
+Timeouts for the forwarded request are per engine (all in milliseconds):
+
+| Field | Default | Purpose |
+| --- | --- | --- |
+| `connectTimeoutMs` | 10000 | TCP connect. |
+| `writeTimeoutMs` | 60000 | Inactivity while uploading the file body. |
+| `readTimeoutMs` | 120000 | Inactivity while awaiting Philter's response. |
+| `callTimeoutMs` | 0 (off) | Hard end-to-end ceiling for the whole call. |
+
+Philter sends nothing until redaction finishes, so `readTimeoutMs` must cover the full processing time of
+the **slowest** document routed to that engine, not the average. Raise it for large files. `callTimeoutMs`
+is an optional upper bound so a stuck engine cannot hold a router thread indefinitely; a value of `0`
+disables it. If a proxy sits in front of the router, raise its read timeout to match.
+
+When a Philter engine serves HTTPS with a self-signed certificate, the forwarded request fails the default
+TLS check. Two per-engine options handle it:
+
+| Field | Default | Purpose |
+| --- | --- | --- |
+| `caCertPath` | (none) | Path to a PEM certificate (or its issuing CA) to trust. Verification stays on: the engine is still authenticated. |
+| `insecureSkipVerify` | `false` | Disable TLS verification entirely. |
+
+```yaml
+engines:
+  philter1: { url: "https://philter1:8443", caCertPath: /etc/philter-router/philter1.crt }
+```
+
+Prefer `caCertPath`: it trusts the specific self-signed certificate while keeping the connection
+authenticated and resistant to interception. `insecureSkipVerify` disables authentication and exposes the
+forwarded document and API key to interception, so use it only on a trusted network or for testing; the
+router logs a warning at startup when it is on. If both are set, `insecureSkipVerify` wins.
 
 ### `classifiers`
 

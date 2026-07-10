@@ -67,3 +67,18 @@ curl -sS localhost:8080/api/health
 
 The Philter engines the router forwards to run as their own services. Add them to the Compose file or
 point the engine URLs at existing deployments.
+
+## Scaling
+
+The two entry points scale differently.
+
+The **HTTP API is stateless**. Each request is independent: there is no shared or cross-request state,
+configuration is read-only after startup, and authorization is per request. Run any number of instances
+behind a load balancer with no session affinity. The routers forward to Philter, so Philter and the
+classifier become the downstream capacity limit as instances are added.
+
+The **folder watcher is single-instance per directory set**. Its processed-file ledger is in-memory and
+per-process, so two watchers on the same directories redact each file twice and contend on the move to
+the `done` directory. To scale watching, partition the directories across instances so no two watch the
+same location, or run a single watcher (or the [batch client](batch.md)) that fans out to a pool of
+stateless API instances.
