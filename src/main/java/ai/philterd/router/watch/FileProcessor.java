@@ -73,6 +73,13 @@ public class FileProcessor {
             final FileAttributes attrs = new FileAttributes(source.toFile(), sources);
             final RoutingDecision decision = router.route(attrs);
 
+            if (decision.rejected()) {
+                // No route matched and the default rejects: quarantine to error, never emit output.
+                moveTo(source, location.error);
+                audit.rejected(hash, decision, attrs.computedLanguage(), attrs.computedClassifications());
+                return;
+            }
+
             final byte[] redacted = engines.get(decision.engine()).redact(source.toFile(), decision.policy())
                     .getContent();
 

@@ -144,6 +144,50 @@ class ConfigLoaderTest {
     }
 
     @Test
+    void rejectDefaultIsValid() throws IOException {
+        final String yaml = VALID.replace("""
+                default:
+                  engine: philter1
+                  policy: default
+                """, """
+                default:
+                  action: reject
+                """);
+        final RouterConfig c = load(yaml);
+        assertTrue(c.defaultOutcome.isReject());
+    }
+
+    @Test
+    void rejectDefaultWithEngineOrPolicyIsRejected() {
+        final String yaml = VALID.replace("""
+                default:
+                  engine: philter1
+                  policy: default
+                """, """
+                default:
+                  action: reject
+                  engine: philter1
+                  policy: default
+                """);
+        assertThrows(ConfigException.class, () -> load(yaml));
+    }
+
+    @Test
+    void unknownDefaultActionIsRejected() {
+        final String yaml = VALID.replace("""
+                default:
+                  engine: philter1
+                  policy: default
+                """, """
+                default:
+                  action: bogus
+                  engine: philter1
+                  policy: default
+                """);
+        assertThrows(ConfigException.class, () -> load(yaml));
+    }
+
+    @Test
     void defaultReferencingUnknownEngineIsRejected() {
         final String yaml = VALID.replace("""
                 default:

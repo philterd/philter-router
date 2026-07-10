@@ -16,6 +16,7 @@
 package ai.philterd.router.routing;
 
 import ai.philterd.router.config.ClassificationMatch;
+import ai.philterd.router.config.Outcome;
 import ai.philterd.router.config.Route;
 import ai.philterd.router.config.RouteMatch;
 import ai.philterd.router.config.RouterConfig;
@@ -54,7 +55,10 @@ public class Router {
             return RoutingDecision.ofRoute(route.name, route.engine, route.policy);
         }
 
-        return RoutingDecision.ofDefault(config.defaultOutcome.engine, config.defaultOutcome.policy);
+        final Outcome def = config.defaultOutcome;
+        return def.isReject()
+                ? RoutingDecision.rejectedByDefault()
+                : RoutingDecision.ofDefault(def.engine, def.policy);
     }
 
     private List<Route> routes() {

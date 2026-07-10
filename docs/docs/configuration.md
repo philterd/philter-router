@@ -138,7 +138,9 @@ within a single field, a list is any-of (OR). For OR across fields, use two rout
 ### `default`
 
 The mandatory catch-all outcome, applied when no route matches or when language detection or a
-classifier cannot decide. The router refuses to start without it.
+classifier cannot decide. The router refuses to start without it. It takes one of two forms.
+
+Redact with a policy (point it at a policy that redacts, so any unmatched file is still redacted):
 
 ```yaml
 default:
@@ -146,7 +148,18 @@ default:
   policy: default
 ```
 
-Point `default.policy` at a policy that redacts, so any unmatched file is still redacted.
+Or reject unmatched documents instead of redacting them with a generic policy:
+
+```yaml
+default:
+  action: reject
+```
+
+With `action: reject` the router does not guess a policy for a file it has no route for. In the folder
+watcher a rejected file is moved to the location's `error` directory and never written to `output`; over
+the HTTP API the request returns `422 Unprocessable Entity` and nothing is sent to Philter. A rejecting
+default must not set `engine` or `policy`. Either form upholds the guarantee that an unmatched file is
+never emitted unredacted: it is either redacted by the default or refused.
 
 ## Examples
 

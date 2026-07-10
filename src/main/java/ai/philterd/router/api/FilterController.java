@@ -70,6 +70,17 @@ public class FilterController {
 
         final ApiRouting.Result result =
                 routing.evaluate(body, filename, directoryHint, policyOverride, classificationHints);
+
+        if (result.decision().rejected()) {
+            // No route matched and the default rejects: refuse the document, do not forward to Philter.
+            audit.rejected(result.hash(), result.decision(),
+                    result.attributes().computedLanguage(), result.attributes().computedClassifications());
+            ApiRouting.deleteQuietly(result.tempFile());
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body("No matching route; document rejected.".getBytes(StandardCharsets.UTF_8));
+        }
+
         // Forward the caller's Authorization to Philter for this request, if provided.
         RequestAuthorization.set(request.getHeader("Authorization"));
         try {

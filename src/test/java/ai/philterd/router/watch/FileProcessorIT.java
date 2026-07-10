@@ -125,6 +125,31 @@ class FileProcessorIT {
     }
 
     @Test
+    void rejectsUnmatchedToErrorWithoutCallingEngine() throws Exception {
+        final RouterConfig rejectConfig = new RouterConfig();
+        final EngineConfig engine = new EngineConfig();
+        engine.url = philter.url("/").toString();
+        rejectConfig.engines = Map.of("philter1", engine);
+        final Outcome def = new Outcome();
+        def.action = "reject";
+        rejectConfig.defaultOutcome = def;
+        rejectConfig.routes = List.of();
+
+        final AttributeSources sources =
+                new DefaultAttributeSources(EXTRACTOR, LANGUAGE, new Classifier(), Map.of());
+        final FileProcessor rejectProcessor = new FileProcessor(new Router(rejectConfig),
+                new EngineRegistry(rejectConfig.engines), sources, new ProcessedLedger(), new AuditLogger());
+
+        final Path file = in("c.txt");
+        Files.writeString(file, "unmatched content");
+        rejectProcessor.process(file, location);
+
+        assertTrue(Files.exists(Path.of(location.error).resolve("c.txt")), "rejected source should move to error");
+        assertFalse(Files.exists(Path.of(location.output).resolve("c.txt")), "no output for a rejected file");
+        assertEquals(0, philter.getRequestCount(), "a rejected file must not reach the engine");
+    }
+
+    @Test
     void identicalContentIsProcessedOnce() throws Exception {
         philter.enqueue(new MockResponse().setBody("R"));
         final Path a = in("a.txt");

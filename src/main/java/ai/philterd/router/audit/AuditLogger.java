@@ -51,6 +51,20 @@ public class AuditLogger {
         emit(node);
     }
 
+    public void rejected(final String hash, final RoutingDecision decision,
+                         final String language, final Map<String, String> classifications) {
+        final ObjectNode node = mapper.createObjectNode();
+        node.put("event", "rejected");
+        node.put("hash", hash);
+        node.put("matchedRoute", decision.matchedRoute());
+        node.put("language", language);
+        final ObjectNode labels = node.putObject("classifications");
+        if (classifications != null) {
+            classifications.forEach(labels::put);
+        }
+        emit(node);
+    }
+
     public void failed(final String hash, final String reason) {
         final ObjectNode node = mapper.createObjectNode();
         node.put("event", "failed");

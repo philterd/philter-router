@@ -17,18 +17,24 @@ package ai.philterd.router.model;
 
 /**
  * The result of routing a file: which route matched (or the default), and the engine and policy to
- * apply. {@code matchedRoute} is {@code "default"} when no route matched.
+ * apply. {@code matchedRoute} is {@code "default"} when no route matched. When {@code rejected} is true
+ * the document matched no route and the default is {@code action: reject}, so there is no engine/policy.
  */
-public record RoutingDecision(String matchedRoute, String engine, String policy, boolean isDefault) {
+public record RoutingDecision(String matchedRoute, String engine, String policy, boolean isDefault,
+                              boolean rejected) {
 
     public static final String DEFAULT = "default";
 
     public static RoutingDecision ofRoute(final String routeName, final String engine, final String policy) {
-        return new RoutingDecision(routeName, engine, policy, false);
+        return new RoutingDecision(routeName, engine, policy, false, false);
     }
 
     public static RoutingDecision ofDefault(final String engine, final String policy) {
-        return new RoutingDecision(DEFAULT, engine, policy, true);
+        return new RoutingDecision(DEFAULT, engine, policy, true, false);
+    }
+
+    public static RoutingDecision rejectedByDefault() {
+        return new RoutingDecision(DEFAULT, null, null, true, true);
     }
 
 }

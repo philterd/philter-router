@@ -14,7 +14,9 @@ A file's route is chosen from its attributes:
 - a **classification** from a local LLM (Ollama).
 
 A file that matches no route, or whose language is not allowed, or whose classifier is unavailable,
-falls to a mandatory **default** policy that redacts. No file is ever passed through unredacted.
+falls to the mandatory **default**. The default either redacts with a policy or, with `action: reject`,
+refuses the file (quarantined to `error` by the watcher, `422` over the API). No file is ever passed
+through unredacted.
 
 ## Status
 
@@ -108,7 +110,8 @@ A single YAML file. See the [`examples/`](examples/) directory for complete, com
 - **`routes`** - an ordered list, first match wins. Each route has a `match` (`contentTypes`,
   `extensions`, `directories`, `classification`), an optional `languages` list of ISO 639-3 codes
   (defaults to `[eng]`; use `any` to accept all), and an outcome (`engine` + `policy`).
-- **`default`** - the mandatory catch-all outcome. The router refuses to start without it.
+- **`default`** - the mandatory catch-all outcome: an `engine` + `policy` that redacts, or `action: reject`
+  to refuse unmatched files. The router refuses to start without it.
 
 ### Match semantics
 

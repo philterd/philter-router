@@ -46,10 +46,11 @@ files never invoke a classifier.
 
 ## Safe default
 
-A detected file is always routed to a policy. When no route matches, or language detection or a
-classifier is unavailable or inconclusive, the router applies the `default` outcome, which must point at
-a policy that redacts. This keeps an unmatched or unclassifiable file from being passed through without
-redaction.
+When no route matches, or language detection or a classifier is unavailable or inconclusive, the router
+applies the mandatory `default` outcome. The default either redacts with a policy that redacts, or, with
+`action: reject`, refuses the document (moved to `error` by the watcher, `422` over the HTTP API). Either
+way an unmatched or unclassifiable file is never passed through without redaction. See
+[Configuration](configuration.md#default).
 
 ## Overrides (HTTP API)
 

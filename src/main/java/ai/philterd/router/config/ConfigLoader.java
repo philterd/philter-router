@@ -79,13 +79,26 @@ public final class ConfigLoader {
             });
         }
 
-        // The default catch-all is mandatory and must reference a real engine (fail-closed).
+        // The default catch-all is mandatory (fail-closed): either redact with a real engine, or reject.
         final Outcome def = config.defaultOutcome;
-        if (def == null || isBlank(def.engine) || isBlank(def.policy)) {
-            throw new ConfigException("A 'default' block with an 'engine' and 'policy' is required.");
+        if (def == null) {
+            throw new ConfigException("A 'default' block is required: an 'engine' and 'policy', or 'action: reject'.");
         }
-        if (!engines.containsKey(def.engine)) {
-            throw new ConfigException("Default engine '" + def.engine + "' is not defined under 'engines'.");
+        if (def.action != null && !def.action.equalsIgnoreCase("redact") && !def.action.equalsIgnoreCase("reject")) {
+            throw new ConfigException("Default 'action' must be 'redact' or 'reject'.");
+        }
+        if (def.isReject()) {
+            if (!isBlank(def.engine) || !isBlank(def.policy)) {
+                throw new ConfigException("A rejecting default ('action: reject') must not set an engine or policy.");
+            }
+        } else {
+            if (isBlank(def.engine) || isBlank(def.policy)) {
+                throw new ConfigException("A 'default' block with an 'engine' and 'policy' is required "
+                        + "(or 'action: reject').");
+            }
+            if (!engines.containsKey(def.engine)) {
+                throw new ConfigException("Default engine '" + def.engine + "' is not defined under 'engines'.");
+            }
         }
 
         final List<Route> routes = config.routes == null ? List.of() : config.routes;

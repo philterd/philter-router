@@ -33,6 +33,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RouterTest {
@@ -205,6 +206,25 @@ class RouterTest {
                 route("med", m, null, "philter1", "hipaa"))));
         router.route(attrs("/in/historia.pdf", s));
         assertEquals(0, s.classifyCalls, "classifier must not run when the language gate already failed");
+    }
+
+    @Test
+    void rejectDefaultProducesRejectedDecisionForUnmatchedFiles() {
+        final RouterConfig c = config(List.of(
+                route("office", ext(".docx"), List.of("any"), "philter2", "office")));
+        c.defaultOutcome = new Outcome();
+        c.defaultOutcome.action = "reject";
+        final Router router = new Router(c);
+
+        final RoutingDecision unmatched = router.route(attrs("/in/photo.png", new FakeSources()));
+        assertTrue(unmatched.isDefault());
+        assertTrue(unmatched.rejected());
+        assertNull(unmatched.engine());
+
+        // A matching route is unaffected by a rejecting default.
+        final RoutingDecision matched = router.route(attrs("/in/report.docx", new FakeSources()));
+        assertEquals("office", matched.matchedRoute());
+        assertFalse(matched.rejected());
     }
 
     @Test

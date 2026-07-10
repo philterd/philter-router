@@ -19,6 +19,9 @@ unless `?p=` overrides it; the engine is always chosen by routing.
 | `GET /api/health` | Liveness. Returns `{"status":"UP"}`. |
 | `POST /api/filter` | Redact and return synchronously. Send a file with `?filename=` (the body is the raw bytes); otherwise the body is text. The applied policy is in the `X-Philter-Policy` header and the document id in `x-document-id`. |
 
+When the configuration's `default` is `action: reject`, a document that matches no route is refused with
+`422 Unprocessable Entity` and nothing is sent to Philter.
+
 Only the filter surface is implemented. Retrieval by document id, policy management, contexts, and the
 ledger are not proxied.
 

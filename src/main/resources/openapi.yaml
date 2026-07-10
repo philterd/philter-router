@@ -60,5 +60,7 @@ paths:
               schema: { type: string }
             application/octet-stream:
               schema: { type: string, format: binary }
+        '422':
+          description: The document matched no route and the default is action: reject; nothing was sent to Philter.
         '502':
           description: The redaction engine call failed.

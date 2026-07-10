@@ -15,10 +15,17 @@
  */
 package ai.philterd.router.config;
 
-/** An engine + policy pair. Used for the mandatory {@code default} outcome. */
+/** The mandatory {@code default} outcome: either an engine + policy to redact with, or {@code action: reject}. */
 public class Outcome {
 
     public String engine;
     public String policy;
+
+    /** {@code redact} (the default when unset) or {@code reject}. */
+    public String action;
+
+    public boolean isReject() {
+        return "reject".equalsIgnoreCase(action);
+    }
 
 }

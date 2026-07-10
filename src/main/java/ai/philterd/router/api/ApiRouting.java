@@ -51,9 +51,9 @@ public class ApiRouting {
         final FileAttributes attributes = new FileAttributes(tempFile.toFile(), filename, directoryHint,
                 sources, classificationHints);
         RoutingDecision decision = router.route(attributes);
-        if (policyOverride != null && !policyOverride.isBlank()) {
+        if (!decision.rejected() && policyOverride != null && !policyOverride.isBlank()) {
             decision = new RoutingDecision(decision.matchedRoute(), decision.engine(), policyOverride,
-                    decision.isDefault());
+                    decision.isDefault(), false);
         }
 
         return new Result(tempFile, attributes, decision, Hashing.sha256(content));
