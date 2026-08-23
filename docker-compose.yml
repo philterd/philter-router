@@ -1,11 +1,15 @@
 # Runs Philter Router with a local Ollama for classification.
 #
-# The router starts whatever its config enables. Provide ./config/router.yaml with `server.enabled: true`
-# to expose the HTTP API (see examples/http-api.yaml). In it:
-#   - the classifier endpoint should be http://ollama:11434,
-#   - engine URLs should point at your Philter engines (the commented services below, or external hosts).
+# The image copies the prebuilt jar, so run `mvn package` before `docker compose build` / `up --build`.
 #
-# Pull the classifier model once after start:  docker compose exec ollama ollama pull llama3.1
+# A sample ./config/router.yaml ships in the repo so `docker compose up` runs out of the box (the API
+# comes up healthy). Edit it to point the engine URLs at your Philter engines (the commented services
+# below, or external hosts), and see examples/ for routes, classifiers, and folder watching.
+#
+# Ollama is only needed for the LLM classifier and is opt-in via the "ollama" profile, so a plain
+# `docker compose up` starts only the router. To run it too:
+#   docker compose --profile ollama up -d
+#   docker compose --profile ollama exec ollama ollama pull llama3.1
 #
 # The container serves the API over HTTPS with a self-signed certificate. For example:
 #   curl -k https://localhost:8080/api/health
@@ -16,19 +20,21 @@ services:
     build: .
     image: philterd/philter-router:latest
     restart: unless-stopped
-    depends_on:
-      - ollama
     ports:
       - "8080:8080"        # HTTP API (matches server.port in the config)
     volumes:
       - ./config:/config:ro
       - ./data:/data
-    environment:
-      # Enable rolling file logs in addition to stdout.
-      JAVA_OPTS: "-Drouter.log.dir=/data/logs"
+    # By default the router logs to stdout (view with `docker compose logs`). To also write rolling
+    # log files under ./data, ensure that directory is writable by uid 10001 and uncomment:
+    # environment:
+    #   JAVA_OPTS: "-Drouter.log.dir=/data/logs"
 
+  # Opt-in: only started with `--profile ollama`. Point the config's classifier endpoint at
+  # http://ollama:11434 when using it.
   ollama:
     image: ollama/ollama:latest
+    profiles: ["ollama"]
     restart: unless-stopped
     volumes:
       - ollama:/root/.ollama

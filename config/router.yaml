@@ -1,0 +1,17 @@
+# Sample configuration so `docker compose up` runs out of the box.
+#
+# It enables the HTTP API and routes everything to the default policy. The router starts and reports
+# healthy even before an engine is reachable; point the engine url below at your Philter to redact.
+# See the examples/ directory for routes, LLM classifiers, and folder watching.
+
+server:
+  enabled: true
+  port: 8080
+
+engines:
+  philter1:
+    url: "http://philter1:8080"   # point at your Philter engine
+
+default:
+  engine: philter1
+  policy: default

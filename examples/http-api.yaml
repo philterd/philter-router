@@ -2,14 +2,12 @@
 #
 # Endpoints:
 #   GET  /api/health
-#   POST /api/filter               (text in, redacted text out; ?p= overrides the policy)
-#   POST /api/documents            (raw file bytes in; returns a documentId)
-#   GET  /api/documents/{id}/status
-#   GET  /api/documents/{id}       (redacted bytes once completed)
+#   POST /api/filter               (text, or a file with ?filename=; redacted bytes out)
+#   GET  /openapi.yaml
 #   GET  /actuator/health, /actuator/prometheus
 #
-# The policy is auto-selected by the routes below unless ?p= is supplied. Filename can be given with
-# ?filename= or the X-Filename header; a source directory hint via the X-Source-Directory header.
+# The policy is auto-selected by the routes below unless ?p= is supplied; ?c= sets the context. Send a
+# file with ?filename=; give a source-directory hint with the X-Source-Directory header.
 
 server:
   enabled: true

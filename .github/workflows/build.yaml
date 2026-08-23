@@ -23,3 +23,5 @@ jobs:
           name: philter-router-jar
           path: target/philter-router.jar
           if-no-files-found: error
+      - name: Build Docker image
+        run: docker build -t philterd/philter-router:latest .

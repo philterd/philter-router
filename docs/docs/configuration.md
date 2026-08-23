@@ -54,6 +54,11 @@ engines:
 `apiKey` and `context` are optional. Do not embed secrets in the policy; resolve an API key from the
 environment where possible.
 
+An engine has one `url`. To balance across several identical Philter replicas, front them with a load
+balancer and point the engine at it; see
+[Multiple Philter engines](deployment.md#multiple-philter-engines). Define separate engines for engines
+that differ in capability or policy, not for interchangeable replicas.
+
 Timeouts for the forwarded request are per engine (all in milliseconds):
 
 | Field | Default | Purpose |

@@ -1,4 +1,5 @@
 target/
+!target/philter-router.jar
 logs/
 data/
 config/
