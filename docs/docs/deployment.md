@@ -56,6 +56,9 @@ at `/home/router/tls` and set `ROUTER_KEYSTORE_PASSWORD` so the existing keystor
 fails to start if a keystore is present and that variable is missing, rather than silently generating a
 second one. `ROUTER_KEYSTORE` overrides the keystore path.
 
+A named volume inherits that directory's ownership from the image and works as is. A bind mount from the
+host does not, so `chown 10001` the host directory first or the container cannot write the keystore.
+
 The generated certificate carries `localhost`, `philter-router`, and `127.0.0.1` as subject alternative
 names, so it can be verified against those names rather than only with `-k`.
 
