@@ -1,0 +1,954 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="User guide for Philter Router, which routes files to a Philter redaction policy and engine based on file attributes.">
+      
+      
+        <meta name="author" content="philterd">
+      
+      
+        <link rel="canonical" href="https://philterd.github.io/philter-router/deployment/">
+      
+      
+        <link rel="prev" href="../logging/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Deployment - Philter Router</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="red" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#deployment" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Philter Router" class="md-header__button md-logo" aria-label="Philter Router" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Philter Router
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Deployment
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+    
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/philterd/philter-router" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Philter Router" class="md-nav__button md-logo" aria-label="Philter Router" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    Philter Router
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/philterd/philter-router" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../http-api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    HTTP API
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../batch/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Batch Redaction
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../folder-watching/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Folder Watching
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../logging/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Logging
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#building-a-release-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building a release image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#https" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scaling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scaling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-philter-engines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Philter engines
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#build" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Build
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#run" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Run
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Docker">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#building-a-release-image" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Building a release image
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#https" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        HTTPS
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#docker-compose" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker Compose
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scaling" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scaling
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Scaling">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#multiple-philter-engines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Multiple Philter engines
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="deployment">Deployment</h1>
+<h2 id="build">Build</h2>
+<pre><code>mvn package
+</code></pre>
+<p>This runs the tests and produces a runnable <code>target/philter-router.jar</code> (Java 25).</p>
+<h2 id="run">Run</h2>
+<pre><code>java -jar philter-router.jar /path/to/router.yaml
+</code></pre>
+<p>The router starts whatever the configuration enables: the HTTP API (<code>server</code>), folder watching
+(<code>watch.locations</code>), or both. To also write rolling log files, set <code>router.log.dir</code>:</p>
+<pre><code>java -Drouter.log.dir=/var/log/philter-router -jar philter-router.jar router.yaml
+</code></pre>
+<p>On Windows the same jar runs as a Windows Service under a service wrapper; the HTTP API and folder
+watching behave identically.</p>
+<h2 id="docker">Docker</h2>
+<p>The <code>Dockerfile</code> copies the prebuilt jar onto a JRE base image and runs it as a non-root user, so build
+the jar first with <code>mvn package</code>. The configuration is mounted at <code>/config/router.yaml</code>, and the watched
+and output directories under <code>/data</code>.</p>
+<pre><code>mvn package
+docker build -t philterd/philter-router .
+docker run --rm \
+  -p 8080:8080 \
+  -v &quot;$PWD/config:/config:ro&quot; \
+  -v &quot;$PWD/data:/data&quot; \
+  philterd/philter-router
+</code></pre>
+<p><code>JAVA_OPTS</code> is passed through, for example <code>-e JAVA_OPTS=-Drouter.log.dir=/data/logs</code>.</p>
+<h3 id="building-a-release-image">Building a release image</h3>
+<p><code>build-image.sh</code> builds the image for <code>linux/amd64</code> and <code>linux/arm64</code>. <code>push-image.sh</code> publishes it. Both
+take an optional version, defaulting to the Maven project version in <code>pom.xml</code>.</p>
+<pre><code>./build-image.sh 1.0.0
+./push-image.sh 1.0.0
+</code></pre>
+<p><code>build-image.sh</code> runs <code>mvn package</code> first, since the Dockerfile copies the prebuilt jar, then loads each
+architecture under its own tag (<code>1.0.0-amd64</code>, <code>1.0.0-arm64</code>) so both are available locally to run and
+test. Set <code>SKIP_MVN=1</code> to image a jar already in <code>target/</code>, and <code>ARCHES</code> to build a single architecture:</p>
+<pre><code>ARCHES=amd64 ./build-image.sh
+</code></pre>
+<p><code>push-image.sh</code> pushes those two tags and joins them into the <code>1.0.0</code> tag that users pull. It builds
+nothing, so what is published is what was built and tested. Publishing is always a manual step run from a
+machine holding the registry credential; no workflow pushes an image.</p>
+<p>The version argument names the image tag only. The version the router reports on
+<a href="../http-api/"><code>GET /api/health</code></a> comes from the Maven project version, which is why the scripts default to
+it. Passing a version that differs from the one in <code>pom.xml</code> makes the tag and the reported version
+disagree.</p>
+<h3 id="https">HTTPS</h3>
+<p>The container generates a self-signed certificate <strong>at start</strong>, not at build time, and serves the API over
+HTTPS, so requests use <code>https://</code> (for example <code>curl -k https://localhost:8080/api/health</code>). Each container
+generates its own keypair with a random password. Nothing is baked into the image: a certificate created at
+build time would be identical in every copy of a published image, so anyone who pulled it would hold the
+private key for every deployment running the default.</p>
+<p>The practical consequences are that the certificate changes when the container is recreated, and that a
+client pinning the certificate needs it re-pinned. To keep one certificate across restarts, mount a volume
+at <code>/home/router/tls</code> and set <code>ROUTER_KEYSTORE_PASSWORD</code> so the existing keystore is reused; the router
+fails to start if a keystore is present and that variable is missing, rather than silently generating a
+second one. <code>ROUTER_KEYSTORE</code> overrides the keystore path.</p>
+<p>A named volume inherits that directory's ownership from the image and works as is. A bind mount from the
+host does not, so <code>chown 10001</code> the host directory first or the container cannot write the keystore.</p>
+<p>The generated certificate carries <code>localhost</code>, <code>philter-router</code>, and <code>127.0.0.1</code> as subject alternative
+names, so it can be verified against those names rather than only with <code>-k</code>.</p>
+<p>To use your own certificate, mount a PKCS12 keystore and override the SSL settings, or disable HTTPS with
+<code>-e SSL_OPTS=</code>:</p>
+<pre><code>docker run --rm -p 8080:8080 \
+  -e SSL_OPTS=&quot;-Dserver.ssl.enabled=true -Dserver.ssl.key-store=/config/keystore.p12 -Dserver.ssl.key-store-password=secret -Dserver.ssl.key-store-type=PKCS12 -Dserver.ssl.key-alias=myalias&quot; \
+  -v &quot;$PWD/config:/config:ro&quot; -v &quot;$PWD/data:/data&quot; \
+  philterd/philter-router
+</code></pre>
+<p>Setting <code>SSL_OPTS</code> to anything, including the empty string, hands TLS configuration entirely to you: the
+entrypoint then generates no certificate and sets no SSL properties of its own.</p>
+<h2 id="docker-compose">Docker Compose</h2>
+<p><code>docker-compose.yml</code> runs the router. A sample <code>config/router.yaml</code> ships in the repo, so after building
+the jar it comes up out of the box and reports healthy:</p>
+<pre><code>mvn package
+docker compose up -d
+curl -k https://localhost:8080/api/health
+</code></pre>
+<p>Edit <code>config/router.yaml</code> to point the engine URLs at your Philter engines (see
+<a href="../configuration/">Configuration</a>); the sample routes everything to the <code>default</code> policy. The router logs
+to stdout by default (<code>docker compose logs</code>); uncomment the <code>JAVA_OPTS</code> line in the Compose file to also
+write rolling files under <code>./data</code>.</p>
+<p>A local Ollama for the LLM classifier is opt-in via the <code>ollama</code> profile, so a plain <code>up</code> starts only the
+router. Start Ollama only when the config uses a classifier, and point the classifier endpoint at
+<code>http://ollama:11434</code>:</p>
+<pre><code>docker compose --profile ollama up -d
+docker compose --profile ollama exec ollama ollama pull llama3.1
+</code></pre>
+<p>The Philter engines the router forwards to run as their own services. Add them to the Compose file or
+point the engine URLs at existing deployments.</p>
+<h2 id="scaling">Scaling</h2>
+<p>The two entry points scale differently.</p>
+<p>The <strong>HTTP API is stateless</strong>. Each request is independent: there is no shared or cross-request state,
+configuration is read-only after startup, and authorization is per request. Run any number of instances
+behind a load balancer with no session affinity. The routers forward to Philter, so Philter and the
+classifier become the downstream capacity limit as instances are added.</p>
+<p>The <strong>folder watcher is single-instance per directory set</strong>. Its processed-file ledger is in-memory and
+per-process, so two watchers on the same directories redact each file twice and contend on the move to
+the <code>done</code> directory. To scale watching, partition the directories across instances so no two watch the
+same location, or run a single watcher (or the <a href="../batch/">batch client</a>) that fans out to a pool of
+stateless API instances.</p>
+<h3 id="multiple-philter-engines">Multiple Philter engines</h3>
+<p>An engine names a single <code>url</code>. To run several identical Philter replicas for throughput or failover,
+front them with a load balancer and point the engine at the balancer:</p>
+<pre><code class="language-yaml">engines:
+  philter1: { url: &quot;http://philter-lb:8080&quot;, readTimeoutMs: 300000 }
+</code></pre>
+<p>The router has no built-in engine pool by design. Balancing with health checks is what a load balancer
+already does, and keeping it external leaves the retry policy in the operator's hands instead of fixing
+it in the router. A minimal nginx front end:</p>
+<pre><code class="language-nginx">upstream philter {
+    server philter-a:8080 max_fails=3 fail_timeout=30s;
+    server philter-b:8080 max_fails=3 fail_timeout=30s;
+}
+
+server {
+    listen 8080;
+
+    location / {
+        proxy_pass http://philter;
+        proxy_next_upstream error http_502 http_503 http_504;
+        proxy_read_timeout 300s;
+        proxy_request_buffering off;
+        client_max_body_size 0;
+    }
+}
+</code></pre>
+<p>Four settings matter for redaction traffic specifically:</p>
+<p><code>proxy_next_upstream</code> omits <code>timeout</code>. Philter sends nothing until redaction finishes, so a timeout does
+not mean the replica failed to receive the document; it may still be working on it. Retrying on timeout
+sends the same document to a second replica.</p>
+<p>Redaction calls are <code>POST /api/filter</code>, and nginx does not pass a non-idempotent request to the next
+server once it has been sent. Failover therefore covers connection-level failures, and <code>max_fails</code> /
+<code>fail_timeout</code> take a failing replica out of rotation for subsequent requests. Adding <code>non_idempotent</code> to
+<code>proxy_next_upstream</code> would also retry after the body was sent, resubmitting the document; set it only if
+duplicate submission is acceptable.</p>
+<p><code>proxy_read_timeout</code> must cover the full processing time of the slowest document routed through it, the
+same sizing rule as the engine's <code>readTimeoutMs</code>. Set the balancer's value at or above the engine's, or
+the balancer will cut the connection first.</p>
+<p><code>client_max_body_size 0</code> removes nginx's 1 MB upload cap, and <code>proxy_request_buffering off</code> streams large
+bodies through instead of spooling them to disk.</p>
+<p>For active health checking rather than nginx's passive <code>max_fails</code>, Philter exposes <code>GET /api/health</code>.
+HAProxy checks it directly:</p>
+<pre><code>backend philter
+    option httpchk GET /api/health
+    server philter-a philter-a:8080 check inter 10s
+    server philter-b philter-b:8080 check inter 10s
+</code></pre>
+<p>Two related cases:</p>
+<p><strong>Connection-level failover without a balancer.</strong> If the engine hostname resolves to several addresses
+(DNS round robin, a Kubernetes Service, Compose DNS), the router's HTTP client tries the next address when
+a connection fails. That handles a replica that is down or unreachable, but nothing for one that is up and
+returning errors or hanging, which is the case a health-checked balancer covers.</p>
+<p><strong>Separate named engines are not a pool.</strong> Define distinct engines when they differ in capability or
+policy, such as a Java engine and a .NET engine for <code>docx</code>/<code>xlsx</code>/OCR, and route to them by file
+attributes. Interchangeable replicas of the same engine belong behind one balancer under one name.</p>
+<p>If the balancer terminates TLS with a self-signed certificate, <code>caCertPath</code> and <code>insecureSkipVerify</code>
+apply to the balancer's certificate rather than the replicas'. See
+<a href="../configuration/">Configuration</a>.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright 2026 Philterd, LLC
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+    
+  </body>
+</html>
