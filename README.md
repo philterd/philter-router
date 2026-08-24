@@ -55,6 +55,31 @@ java -Drouter.log.dir=/var/log/philter-router -jar target/philter-router.jar rou
 By default the router logs to stdout (operational logs and the structured audit trail both go to the
 console).
 
+## Docker
+
+Published images are on [Docker Hub](https://hub.docker.com/r/philterd/philter-router) for `linux/amd64`
+and `linux/arm64`. Only pre-release snapshots are published so far, so pull an explicit tag rather than
+the bare name:
+
+```
+docker pull philterd/philter-router:1.0.0-SNAPSHOT
+docker run --rm -p 8080:8080 \
+  -v "$PWD/config:/config:ro" \
+  -v "$PWD/data:/data" \
+  philterd/philter-router:1.0.0-SNAPSHOT
+```
+
+The configuration is read from `/config/router.yaml`, watched and output directories live under `/data`,
+and the API listens on port 8080. The container serves HTTPS with a self-signed certificate generated at
+start, so requests use `https://`:
+
+```
+curl -k https://localhost:8080/api/health
+```
+
+See [Deployment](docs/docs/deployment.md) for supplying your own keystore, disabling HTTPS, Docker
+Compose, and building the image.
+
 ## HTTP API
 
 Enable the API with a `server` block (see [`examples/http-api.yaml`](examples/http-api.yaml)):

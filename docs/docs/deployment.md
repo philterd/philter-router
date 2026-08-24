@@ -45,7 +45,7 @@ docker run --rm \
 ### Building a release image
 
 `build-image.sh` builds the image for `linux/amd64` and `linux/arm64`. `push-image.sh` publishes it. Both
-take an optional version, defaulting to `latest`.
+take an optional version, defaulting to the Maven project version in `pom.xml`.
 
 ```
 ./build-image.sh 1.0.0
@@ -65,8 +65,9 @@ nothing, so what is published is what was built and tested. Publishing is always
 machine holding the registry credential; no workflow pushes an image.
 
 The version argument names the image tag only. The version the router reports on
-[`GET /api/health`](http-api.md) comes from the Maven project version, so set that in `pom.xml` before
-building a release image or the tag and the reported version disagree.
+[`GET /api/health`](http-api.md) comes from the Maven project version, which is why the scripts default to
+it. Passing a version that differs from the one in `pom.xml` makes the tag and the reported version
+disagree.
 
 ### HTTPS
 
