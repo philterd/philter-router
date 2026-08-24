@@ -16,7 +16,7 @@ servers:
 paths:
   /api/health:
     get:
-      summary: Liveness.
+      summary: Liveness and version.
       responses:
         '200':
           description: The router is up.
@@ -28,6 +28,10 @@ paths:
                   status:
                     type: string
                     example: UP
+                  applicationVersion:
+                    type: string
+                    description: The router's build version, or "unknown" when the build info is absent.
+                    example: 1.0.0
 
   /api/filter:
     post:

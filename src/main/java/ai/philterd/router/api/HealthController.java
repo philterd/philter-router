@@ -15,6 +15,8 @@
  */
 package ai.philterd.router.api;
 
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,9 +26,22 @@ import java.util.Map;
 @RestController
 public class HealthController {
 
+    private final String version;
+
+    /**
+     * The version comes from META-INF/build-info.properties, written by the build-info goal of the
+     * Spring Boot Maven plugin. Running from classes built outside Maven (an IDE, for example) has no
+     * such file and therefore no BuildProperties bean, so the version reports as unknown rather than
+     * failing startup.
+     */
+    public HealthController(final ObjectProvider<BuildProperties> buildProperties) {
+        final BuildProperties build = buildProperties.getIfAvailable();
+        this.version = build != null ? build.getVersion() : "unknown";
+    }
+
     @GetMapping("/api/health")
     public Map<String, String> health() {
-        return Map.of("status", "UP");
+        return Map.of("status", "UP", "applicationVersion", version);
     }
 
 }

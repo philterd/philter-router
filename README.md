@@ -71,7 +71,7 @@ engine is always chosen by routing.
 
 | Endpoint | Description |
 | --- | --- |
-| `GET /api/health` | Liveness. |
+| `GET /api/health` | Liveness and version. |
 | `POST /api/filter` | Redact and return synchronously. Send a file with `?filename=` (body is the raw bytes); otherwise the body is text. `?p=` overrides the policy, `?c=` sets the context, `X-Source-Directory` supplies a directory hint. The applied policy is in `X-Philter-Policy` and the document id in `x-document-id`. |
 
 ```

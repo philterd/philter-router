@@ -16,11 +16,15 @@ unless `?p=` overrides it; the engine is always chosen by routing.
 
 | Endpoint | Description |
 | --- | --- |
-| `GET /api/health` | Liveness. Returns `{"status":"UP"}`. |
+| `GET /api/health` | Liveness and version. Returns `{"status":"UP","applicationVersion":"1.0.0"}`. |
 | `POST /api/filter` | Redact and return synchronously. Send a file with `?filename=` (the body is the raw bytes); otherwise the body is text. The applied policy is in the `X-Philter-Policy` header and the document id in `x-document-id`. |
 
 When the configuration's `default` is `action: reject`, a document that matches no route is refused with
 `422 Unprocessable Entity` and nothing is sent to Philter.
+
+`applicationVersion` is the Maven project version, recorded at build time in
+`META-INF/build-info.properties` by `mvn package`. Running from classes built outside Maven, such as in an
+IDE, leaves that file absent and the version reports as `unknown`.
 
 Only the filter surface is implemented. Retrieval by document id, policy management, contexts, and the
 ledger are not proxied.

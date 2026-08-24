@@ -42,6 +42,32 @@ docker run --rm \
 
 `JAVA_OPTS` is passed through, for example `-e JAVA_OPTS=-Drouter.log.dir=/data/logs`.
 
+### Building a release image
+
+`build-image.sh` builds the image for `linux/amd64` and `linux/arm64`. `push-image.sh` publishes it. Both
+take an optional version, defaulting to `latest`.
+
+```
+./build-image.sh 1.0.0
+./push-image.sh 1.0.0
+```
+
+`build-image.sh` runs `mvn package` first, since the Dockerfile copies the prebuilt jar, then loads each
+architecture under its own tag (`1.0.0-amd64`, `1.0.0-arm64`) so both are available locally to run and
+test. Set `SKIP_MVN=1` to image a jar already in `target/`, and `ARCHES` to build a single architecture:
+
+```
+ARCHES=amd64 ./build-image.sh
+```
+
+`push-image.sh` pushes those two tags and joins them into the `1.0.0` tag that users pull. It builds
+nothing, so what is published is what was built and tested. Publishing is always a manual step run from a
+machine holding the registry credential; no workflow pushes an image.
+
+The version argument names the image tag only. The version the router reports on
+[`GET /api/health`](http-api.md) comes from the Maven project version, so set that in `pom.xml` before
+building a release image or the tag and the reported version disagree.
+
 ### HTTPS
 
 The container generates a self-signed certificate **at start**, not at build time, and serves the API over
