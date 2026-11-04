@@ -29,13 +29,13 @@ public class EngineConfig {
     /** TCP connect timeout. */
     public long connectTimeoutMs = 10_000;
 
-    /** Inactivity timeout while uploading the file body. */
+    /** Time allowed for the upload. Added to readTimeoutMs to give the request deadline. */
     public long writeTimeoutMs = 60_000;
 
-    /** Inactivity timeout while awaiting Philter's response. Size to the slowest routed document. */
+    /** Time allowed for Philter's response. Size to the slowest routed document. */
     public long readTimeoutMs = 120_000;
 
-    /** Hard end-to-end ceiling for the whole call. 0 disables it. */
+    /** Optional lower ceiling on the request deadline. 0 disables it. */
     public long callTimeoutMs = 0;
 
     /** Path to a PEM certificate (or CA) to trust for a self-signed Philter, keeping verification on. */

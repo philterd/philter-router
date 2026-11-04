@@ -17,6 +17,7 @@ package ai.philterd.router.engine;
 
 import ai.philterd.philter.model.BinaryFilterResponse;
 import ai.philterd.philter.model.FilterResponse;
+import ai.philterd.philter.model.exceptions.ClientException;
 import ai.philterd.router.config.EngineConfig;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -27,11 +28,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.net.http.HttpTimeoutException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /** Integration test: PhilterEngine against a stubbed Philter, verifying request shape and auth forwarding. */
@@ -84,6 +89,50 @@ class PhilterEngineIT {
         RequestAuthorization.set("sk_callerkey");
         engine.redactText("t", "default", null);
         assertEquals("sk_callerkey", philter.takeRequest().getHeader("Authorization"));
+    }
+
+    @Test
+    void timesOutWhenTheResponseBodyStalls() throws Exception {
+        final EngineConfig config = new EngineConfig();
+        config.url = philter.url("/").toString();
+        config.writeTimeoutMs = 0;
+        config.readTimeoutMs = 300;
+        philter.enqueue(new MockResponse().setBody("xxx").throttleBody(1, 1, TimeUnit.SECONDS));
+
+        final PhilterEngine stalled = new PhilterEngine("philter1", config);
+
+        assertThrows(HttpTimeoutException.class, () -> stalled.redactText("t", "default", null));
+    }
+
+    @Test
+    void doesNotFollowRedirects() throws Exception {
+        philter.enqueue(new MockResponse().setResponseCode(307).setHeader("Location", philter.url("/moved")));
+        philter.enqueue(new MockResponse().setBody("followed"));
+
+        assertThrows(ClientException.class, () -> engine.redactText("t", "default", null));
+        assertEquals(1, philter.getRequestCount());
+    }
+
+    @Test
+    void requestTimeoutIsTheUploadAndResponseBudgetCappedByCallTimeout() {
+        final EngineConfig config = new EngineConfig();
+        config.writeTimeoutMs = 1_000;
+        config.readTimeoutMs = 2_000;
+        assertEquals(Duration.ofMillis(3_000), PhilterEngine.requestTimeout(config));
+
+        config.callTimeoutMs = 500;
+        assertEquals(Duration.ofMillis(500), PhilterEngine.requestTimeout(config));
+
+        config.callTimeoutMs = 10_000;
+        assertEquals(Duration.ofMillis(3_000), PhilterEngine.requestTimeout(config));
+    }
+
+    @Test
+    void rejectsAnEngineWithNoTimeout() {
+        final EngineConfig config = new EngineConfig();
+        config.writeTimeoutMs = 0;
+        config.readTimeoutMs = 0;
+        assertThrows(IllegalArgumentException.class, () -> PhilterEngine.requestTimeout(config));
     }
 
     @Test

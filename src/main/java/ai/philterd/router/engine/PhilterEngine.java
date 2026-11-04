@@ -19,11 +19,11 @@ import ai.philterd.philter.PhilterClient;
 import ai.philterd.philter.model.BinaryFilterResponse;
 import ai.philterd.philter.model.FilterResponse;
 import ai.philterd.router.config.EngineConfig;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.ProxySelector;
+import java.net.http.HttpClient;
 import java.time.Duration;
 
 /** A named Philter engine the router forwards files to, wrapping the Philter Java SDK client. */
@@ -38,28 +38,45 @@ public class PhilterEngine {
         this.context = config.context == null ? "" : config.context;
         final String configuredApiKey = config.apiKey;
 
-        // Set Authorization from the caller's request when present, else the configured key. This lets
-        // the router forward a caller's Authorization header to Philter per request.
-        final OkHttpClient.Builder http = new OkHttpClient.Builder()
-                .connectTimeout(Duration.ofMillis(config.connectTimeoutMs))
-                .writeTimeout(Duration.ofMillis(config.writeTimeoutMs))
-                .readTimeout(Duration.ofMillis(config.readTimeoutMs))
-                .callTimeout(Duration.ofMillis(config.callTimeoutMs))
-                .addInterceptor(chain -> {
-                    final String authorization = resolveAuthorization(RequestAuthorization.get(), configuredApiKey);
-                    Request request = chain.request();
-                    if (authorization != null) {
-                        request = request.newBuilder().header("Authorization", authorization).build();
-                    }
-                    return chain.proceed(request);
-                });
+        // Redirects stay off so a document and the caller's Authorization never reach a host other than
+        // the configured engine. HTTP/1.1 and the proxy selector match the SDK's own client.
+        final HttpClient.Builder http = HttpClient.newBuilder()
+                .followRedirects(HttpClient.Redirect.NEVER)
+                .version(HttpClient.Version.HTTP_1_1);
+        if (config.connectTimeoutMs > 0) {
+            http.connectTimeout(Duration.ofMillis(config.connectTimeoutMs));
+        }
+        final ProxySelector proxySelector = ProxySelector.getDefault();
+        if (proxySelector != null) {
+            http.proxy(proxySelector);
+        }
 
         TlsSupport.apply(http, config, name);
 
+        // Set Authorization from the caller's request when present, else the configured key. This lets
+        // the router forward a caller's Authorization header to Philter per request.
         this.client = new PhilterClient.PhilterClientBuilder()
                 .withEndpoint(config.url)
-                .withOkHttpClientBuilder(http)
+                .withHttpClientBuilder(new EngineHttpClient.Builder(http,
+                        () -> resolveAuthorization(RequestAuthorization.get(), configuredApiKey),
+                        requestTimeout(config)))
                 .build();
+    }
+
+    /** The deadline for a whole request: upload plus response, capped by callTimeoutMs when set. */
+    static Duration requestTimeout(final EngineConfig config) {
+        final long budget = config.writeTimeoutMs + config.readTimeoutMs;
+        final long timeout;
+        if (config.callTimeoutMs > 0) {
+            timeout = budget > 0 ? Math.min(config.callTimeoutMs, budget) : config.callTimeoutMs;
+        } else {
+            timeout = budget;
+        }
+        if (timeout <= 0) {
+            throw new IllegalArgumentException("An engine needs a positive writeTimeoutMs, readTimeoutMs, "
+                    + "or callTimeoutMs.");
+        }
+        return Duration.ofMillis(timeout);
     }
 
     /** The per-request Authorization if present, otherwise the configured key, otherwise none. */

@@ -64,14 +64,21 @@ Timeouts for the forwarded request are per engine (all in milliseconds):
 | Field | Default | Purpose |
 | --- | --- | --- |
 | `connectTimeoutMs` | 10000 | TCP connect. |
-| `writeTimeoutMs` | 60000 | Inactivity while uploading the file body. |
-| `readTimeoutMs` | 120000 | Inactivity while awaiting Philter's response. |
-| `callTimeoutMs` | 0 (off) | Hard end-to-end ceiling for the whole call. |
+| `writeTimeoutMs` | 60000 | Time allowed for uploading the file body. |
+| `readTimeoutMs` | 120000 | Time allowed for awaiting Philter's response. |
+| `callTimeoutMs` | 0 (off) | Optional lower ceiling for the whole call. |
+
+A forwarded request has one deadline, `writeTimeoutMs` plus `readTimeoutMs`, covering the upload, processing,
+and the response. They are not inactivity timeouts. When `callTimeoutMs` is set, the deadline is the lower of
+it and that sum, so raising `callTimeoutMs` alone does not extend the deadline; a value of `0` disables it.
+At least one of the three values must be positive.
 
 Philter sends nothing until redaction finishes, so `readTimeoutMs` must cover the full processing time of
-the **slowest** document routed to that engine, not the average. Raise it for large files. `callTimeoutMs`
-is an optional upper bound so a stuck engine cannot hold a router thread indefinitely; a value of `0`
-disables it. If a proxy sits in front of the router, raise its read timeout to match.
+the **slowest** document routed to that engine, not the average. Raise it for large files. If a proxy sits in
+front of the router, raise its read timeout to match.
+
+The router does not follow redirects from an engine, so a redirect fails the request. Point `url` at the
+address that serves the Philter API directly.
 
 When a Philter engine serves HTTPS with a self-signed certificate, the forwarded request fails the default
 TLS check. Two per-engine options handle it:

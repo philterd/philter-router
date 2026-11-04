@@ -16,16 +16,18 @@
 package ai.philterd.router.engine;
 
 import ai.philterd.router.config.EngineConfig;
-import okhttp3.OkHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLEngine;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509ExtendedTrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.InputStream;
+import java.net.Socket;
+import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyStore;
@@ -43,19 +45,18 @@ final class TlsSupport {
     }
 
     /** Applies the engine's TLS trust settings to the client builder. Fails closed on a bad certificate. */
-    static void apply(final OkHttpClient.Builder builder, final EngineConfig config, final String engineName) {
+    static void apply(final HttpClient.Builder builder, final EngineConfig config, final String engineName) {
         try {
             if (config.insecureSkipVerify) {
                 final X509TrustManager trustManager = insecureTrustManager();
-                builder.sslSocketFactory(socketFactory(trustManager), trustManager);
-                builder.hostnameVerifier((hostname, session) -> true);
+                builder.sslContext(sslContext(trustManager));
                 LOGGER.warn("Engine '{}' has insecureSkipVerify enabled: TLS verification to Philter is "
                         + "disabled and the connection is exposed to interception. Use caCertPath instead "
                         + "outside a trusted network.", engineName);
             } else if (config.caCertPath != null && !config.caCertPath.isBlank()) {
                 try (InputStream in = Files.newInputStream(Path.of(config.caCertPath))) {
                     final X509TrustManager trustManager = trustManagerForCertificates(in);
-                    builder.sslSocketFactory(socketFactory(trustManager), trustManager);
+                    builder.sslContext(sslContext(trustManager));
                 }
             }
         } catch (final Exception e) {
@@ -64,15 +65,38 @@ final class TlsSupport {
         }
     }
 
-    /** A trust manager that accepts any certificate. Disables server authentication. */
+    /**
+     * A trust manager that accepts any certificate. Disables server authentication. It is an extended
+     * trust manager because the JDK checks the hostname itself for a plain X509TrustManager.
+     */
     static X509TrustManager insecureTrustManager() {
-        return new X509TrustManager() {
+        return new X509ExtendedTrustManager() {
             @Override
             public void checkClientTrusted(final X509Certificate[] chain, final String authType) {
             }
 
             @Override
             public void checkServerTrusted(final X509Certificate[] chain, final String authType) {
+            }
+
+            @Override
+            public void checkClientTrusted(final X509Certificate[] chain, final String authType,
+                                           final Socket socket) {
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate[] chain, final String authType,
+                                           final Socket socket) {
+            }
+
+            @Override
+            public void checkClientTrusted(final X509Certificate[] chain, final String authType,
+                                           final SSLEngine engine) {
+            }
+
+            @Override
+            public void checkServerTrusted(final X509Certificate[] chain, final String authType,
+                                           final SSLEngine engine) {
             }
 
             @Override
@@ -108,10 +132,10 @@ final class TlsSupport {
         throw new IllegalStateException("No X509TrustManager available");
     }
 
-    private static SSLSocketFactory socketFactory(final X509TrustManager trustManager) throws Exception {
+    private static SSLContext sslContext(final X509TrustManager trustManager) throws Exception {
         final SSLContext context = SSLContext.getInstance("TLS");
         context.init(null, new TrustManager[]{trustManager}, null);
-        return context.getSocketFactory();
+        return context;
     }
 
 }

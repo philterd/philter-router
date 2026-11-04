@@ -54,6 +54,15 @@ class PhilterEngineTlsIT {
         philter.shutdown();
     }
 
+    private void serveCertificateForAnotherHost() throws Exception {
+        philter.shutdown();
+        certificate = new HeldCertificate.Builder().addSubjectAlternativeName("philter.example.com").build();
+        philter = new MockWebServer();
+        philter.useHttps(new HandshakeCertificates.Builder().heldCertificate(certificate).build()
+                .sslSocketFactory(), false);
+        philter.start();
+    }
+
     private EngineConfig baseConfig() {
         final EngineConfig config = new EngineConfig();
         config.url = philter.url("/").toString();
@@ -83,6 +92,32 @@ class PhilterEngineTlsIT {
 
     @Test
     void insecureSkipVerifyAcceptsUntrustedCertificate(@TempDir final Path tmp) throws Exception {
+        final EngineConfig config = baseConfig();
+        config.insecureSkipVerify = true;
+
+        final PhilterEngine engine = new PhilterEngine("philter1", config);
+        philter.enqueue(new MockResponse().setBody(new Buffer().write(new byte[]{9})));
+
+        assertArrayEquals(new byte[]{9}, engine.redact(file(tmp), "default", null).getContent());
+    }
+
+    @Test
+    void caCertPathStillVerifiesTheHostname(@TempDir final Path tmp) throws Exception {
+        serveCertificateForAnotherHost();
+        final Path pem = tmp.resolve("philter.pem");
+        Files.writeString(pem, certificate.certificatePem());
+        final EngineConfig config = baseConfig();
+        config.caCertPath = pem.toString();
+
+        final PhilterEngine engine = new PhilterEngine("philter1", config);
+        philter.enqueue(new MockResponse().setBody(new Buffer().write(new byte[]{9})));
+
+        assertThrows(IOException.class, () -> engine.redact(file(tmp), "default", null));
+    }
+
+    @Test
+    void insecureSkipVerifyAlsoSkipsTheHostnameCheck(@TempDir final Path tmp) throws Exception {
+        serveCertificateForAnotherHost();
         final EngineConfig config = baseConfig();
         config.insecureSkipVerify = true;
 
